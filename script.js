@@ -4649,6 +4649,10 @@ function salvarOpcaoData(opcao) {
   localStorage.setItem('opcaoDataProducao', opcao);
   atualizarCampoDataManualGerador();
   mostrarToast('Data de produção: ' + nomeOpcaoData(opcao));
+
+  if (typeof salvarNoFirebase === 'function') {
+    salvarNoFirebase();
+  }
 }
 
 function nomeOpcaoData(opcao) {
