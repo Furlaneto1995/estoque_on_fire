@@ -232,6 +232,15 @@ function carregarDados() {
   }
 }
 
+function salvarDados() {
+  localStorage.setItem("estoque", JSON.stringify(estoque));
+  localStorage.setItem("historico", JSON.stringify(historico));
+
+  if (typeof salvarNoFirebase === 'function') {
+    salvarNoFirebase();
+  }
+}
+
 /* ================= BANCO NO LOCALSTORAGE ================= */
 
 function carregarBanco() {
