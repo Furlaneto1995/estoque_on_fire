@@ -684,38 +684,44 @@
   };
 
   // Escuta mudanças em tempo real
-  window.escutarFirebase = function() {
+window.escutarFirebase = function() {
+  if (!usarFirebase) return;
+
+  db.collection("estoque").doc("dados").onSnapshot(function(docSnap) {
     if (!usarFirebase) return;
 
-    db.collection("estoque").doc("dados").onSnapshot(function(docSnap) {
-      if (!usarFirebase) return;
+    if (docSnap.exists) {
+      let dados = docSnap.data();
+      let novoEstoque = JSON.parse(dados.estoque || '{}');
+      let novoHistorico = JSON.parse(dados.historico || '[]');
+      let novoBanco = JSON.parse(dados.banco || '{}');
+      let novasPendentes = JSON.parse(dados.etiquetasPendentes || '[]');
 
-      if (docSnap.exists) {
-        let dados = docSnap.data();
-        let novoEstoque = JSON.parse(dados.estoque || '{}');
-let novoHistorico = JSON.parse(dados.historico || '[]');
-let novoBanco = JSON.parse(dados.banco || '{}');
-let novasPendentes = JSON.parse(dados.etiquetasPendentes || '[]');
+      let estoqueAtual = JSON.stringify(estoque);
+      let historicoAtual = JSON.stringify(historico);
+      let pendentesAtual = JSON.stringify(etiquetasPendentes);
 
-        let estoqueAtual = JSON.stringify(estoque);
-        let historicoAtual = JSON.stringify(historico);
-
-        if (JSON.stringify(novoEstoque) !== estoqueAtual ||
-            JSON.stringify(novoHistorico) !== historicoAtual) {
-         estoque = novoEstoque;
-historico = novoHistorico;
-banco = novoBanco;
-etiquetasPendentes = novasPendentes;
-localStorage.setItem("estoque", JSON.stringify(estoque));
-localStorage.setItem("historico", JSON.stringify(historico));
-localStorage.setItem("bancoCustom", JSON.stringify(banco));
-localStorage.setItem("etiquetasPendentes", JSON.stringify(etiquetasPendentes));
-          atualizarTudo();
-          console.log("Dados sincronizados do Firebase");
-        }
+      if (JSON.stringify(novoEstoque) !== estoqueAtual ||
+          JSON.stringify(novoHistorico) !== historicoAtual ||
+          JSON.stringify(novasPendentes) !== pendentesAtual) {
+        
+        estoque = novoEstoque;
+        historico = novoHistorico;
+        banco = novoBanco;
+        etiquetasPendentes = novasPendentes;
+        
+        localStorage.setItem("estoque", JSON.stringify(estoque));
+        localStorage.setItem("historico", JSON.stringify(historico));
+        localStorage.setItem("bancoCustom", JSON.stringify(banco));
+        localStorage.setItem("etiquetasPendentes", JSON.stringify(etiquetasPendentes));
+        
+        atualizarTudo();
+        atualizarBotaoPendentesConfig();
+        console.log("Dados sincronizados do Firebase");
       }
-    });
-  };
+    }
+  });
+};
 
   // Alternar modo de armazenamento
   window.alternarModoArmazenamento = function() {
