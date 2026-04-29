@@ -525,6 +525,7 @@
         <span id="btnPendentesContador" class="pendentes-badge" style="display:none;"></span>
       </button>
       <button class="btn-opcao btn-editar-opcao" onclick="abrirConfigDataProducao()">📅 Data de produção</button>
+              <button class="btn-opcao btn-editar-opcao" onclick="abrirConferencia()">📋 Conferência</button>
       <div class="btn-opcao dark-switch-row" onclick="alternarModoEscuro()">
         <div class="dark-switch-label">
           <span id="darkModeIcon">🌙</span>
@@ -662,7 +663,130 @@
     <button class="btn-opcao btn-cancelar-opcao" onclick="fecharConfigDataProducao()">Fechar</button>
   </div>
 </div>
+<!-- ================= MODAL CONFERÊNCIA ================= -->
+<div id="modalConferencia" class="modal-overlay hidden">
+  <div class="modal-gerador-content">
 
+    <!-- TELA 1 — INICIAR -->
+    <div id="confTelaIniciar">
+      <div class="modal-saida-header">
+        <h3>📋 Conferência de Inventário</h3>
+        <button class="config-fechar" onclick="fecharConferencia()">✕</button>
+      </div>
+
+<div style="padding:8px 0;">
+  <p style="font-size:13px; color:#64748b; margin:0 0 10px;">O que deseja conferir?</p>
+
+  <label style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border:2px solid #e2e8f0; border-radius:8px; margin-bottom:5px; cursor:pointer; font-size:14px;">
+    <input type="radio" name="confTipo" value="tudo" checked style="width:20px; height:20px; margin:0;">
+    Tudo
+  </label>
+  <label style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border:2px solid #e2e8f0; border-radius:8px; margin-bottom:5px; cursor:pointer; font-size:14px;">
+    <input type="radio" name="confTipo" value="brf" style="width:20px; height:20px; margin:0;">
+    BRF
+  </label>
+  <label style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border:2px solid #e2e8f0; border-radius:8px; margin-bottom:5px; cursor:pointer; font-size:14px;">
+    <input type="radio" name="confTipo" value="tampas" style="width:20px; height:20px; margin:0;">
+    Tampas
+  </label>
+  <label style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:#f8fafc; border:2px solid #e2e8f0; border-radius:8px; margin-bottom:5px; cursor:pointer; font-size:14px;">
+    <input type="radio" name="confTipo" value="laminacao" style="width:20px; height:20px; margin:0;">
+    1ª Laminação
+  </label>
+</div>
+
+<button class="btn-confirmar" onclick="iniciarConferencia()" style="margin-top:6px; padding:10px;">▶ Iniciar conferência</button>
+    </div>
+
+    <!-- TELA 2 — EM ANDAMENTO -->
+    <div id="confTelaAndamento" class="hidden" style="display:flex; flex-direction:column; flex:1; min-height:0; gap:6px;">
+      <div class="modal-saida-header">
+        <h3>📋 Conferência</h3>
+        <button class="config-fechar" onclick="pausarConferencia()">✕</button>
+      </div>
+
+      <!-- Progresso -->
+      <div style="text-align:center; padding:4px 0;">
+        <span id="confProgresso" style="font-size:14px; font-weight:700; color:#1e3a8a;">0/0 (0%)</span>
+        <div class="barra" style="margin-top:4px;">
+          <div id="confBarra" class="barra-preenchimento" style="background:#1e3a8a; width:0%;"></div>
+        </div>
+      </div>
+
+      <!-- Scanner -->
+      <div class="qr-actions-row">
+        <button class="btn-scan-qr btn-scan-compact" onclick="confScannerQR()">📷 Escanear QR</button>
+        <button class="btn-scan-continuo btn-scan-compact" onclick="confScannerContinuo()">📷⚡ Contínuo</button>
+      </div>
+
+      <!-- Busca manual -->
+      <div class="input-row">
+        <input id="confBusca" placeholder="Buscar bobina" oninput="confFiltrarLista()">
+        <button class="btn-clear" onclick="document.getElementById('confBusca').value=''; confFiltrarLista();">X</button>
+      </div>
+
+      <!-- Lista -->
+      <div id="confLista" style="flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:4px; -webkit-overflow-scrolling:touch;"></div>
+
+      <!-- Botões -->
+      <div style="display:flex; gap:8px; padding-top:6px; border-top:1px solid #e2e8f0;">
+        <button class="btn-cancelar" onclick="pausarConferencia()" style="flex:1;">⏸ Pausar</button>
+        <button class="btn-confirmar" onclick="finalizarConferencia()" style="flex:1;">✅ Finalizar</button>
+      </div>
+    </div>
+
+    <!-- TELA 3 — RESULTADO -->
+    <div id="confTelaResultado" class="hidden" style="display:flex; flex-direction:column; flex:1; min-height:0; gap:6px;">
+      <div class="modal-saida-header">
+        <h3>📊 Resultado</h3>
+        <button class="config-fechar" onclick="fecharConferencia()">✕</button>
+      </div>
+
+      <!-- Resumo -->
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; padding:4px 0;">
+        <div style="text-align:center; padding:8px; background:#f0fdf4; border-radius:8px;">
+          <div style="font-size:11px; color:#16a34a;">Conferidas</div>
+          <strong id="confResConferidas" style="font-size:18px; color:#16a34a;">0</strong>
+        </div>
+        <div style="text-align:center; padding:8px; background:#fef2f2; border-radius:8px;">
+          <div style="font-size:11px; color:#dc2626;">Não encontradas</div>
+          <strong id="confResNaoEncontradas" style="font-size:18px; color:#dc2626;">0</strong>
+        </div>
+        <div style="text-align:center; padding:8px; background:#fefce8; border-radius:8px;">
+          <div style="font-size:11px; color:#ca8a04;">Extras</div>
+          <strong id="confResExtras" style="font-size:18px; color:#ca8a04;">0</strong>
+        </div>
+      </div>
+
+      <!-- Lista resultado -->
+      <div id="confListaResultado" style="flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:4px; -webkit-overflow-scrolling:touch;"></div>
+
+      <!-- Botões -->
+      <div style="display:flex; flex-direction:column; gap:6px; padding-top:6px; border-top:1px solid #e2e8f0;">
+        <button class="btn-main" onclick="confExportarResultado()">📊 Exportar relatório</button>
+        <button class="btn-confirmar" onclick="confAjustarEstoque()">🔧 Ajustar estoque</button>
+        <button class="btn-cancelar" onclick="fecharConferencia()">✕ Fechar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= MODAL SCANNER CONFERÊNCIA ================= -->
+<div id="modalScannerConf" class="modal-overlay hidden">
+  <div class="modal-saida-content">
+    <div class="modal-saida-header">
+      <h3 id="confScannerTitulo">Escanear para conferência</h3>
+      <button class="config-fechar" onclick="confFecharScanner()">✕</button>
+    </div>
+    <div id="readerConf" style="width:100%; min-height:260px;"></div>
+    <div id="confScannerStatus" style="text-align:center; font-size:14px; font-weight:700; color:#16a34a; margin:8px 0;">
+      0 conferida(s)
+    </div>
+    <div id="confScannerLog" style="max-height:120px; overflow-y:auto; font-size:11px; color:#64748b; border:1px solid #e2e8f0; border-radius:8px; padding:6px;"></div>
+    <button class="btn-modal btn-cancelar" onclick="confFecharScanner()" style="margin-top:10px;">Finalizar</button>
+  </div>
+</div>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBKzR0Tsq5yPdLmjKBODtGlUt8f9xflNYQ",
