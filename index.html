@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estoque Mobile</title>
-  <link rel="stylesheet" href="style.css?v=2006">
+  <link rel="stylesheet" href="style.css?v=2007">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#1e3a8a">
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
@@ -378,6 +378,9 @@
   <div class="modal-opcoes-content">
     <h3 id="modalHistoricoTitulo">Ações do registro</h3>
     <button id="btnHistoricoQR" class="btn-opcao btn-editar-opcao" onclick="abrirQRDoHistorico()">📱 Ver QR da bobina</button>
+    <button id="btnHistoricoDesfazerExclusao" class="btn-opcao btn-desfazer-opcao" style="display:none" onclick="desfazerExclusaoDoHistorico()">↩️ Desfazer exclusão</button>
+    <button id="btnHistoricoDesfazerConsumo" class="btn-opcao btn-desfazer-opcao" style="display:none" onclick="desfazerConsumoDoHistorico()">↩️ Desfazer consumo</button>
+    <button id="btnHistoricoDesfazerEntrada" class="btn-opcao btn-desfazer-opcao" style="display:none" onclick="desfazerEntradaDoHistorico()">↩️ Desfazer entrada</button>
     <button class="btn-opcao btn-excluir-opcao" onclick="confirmarRemoverHistoricoSelecionado()">🗑 Remover registro</button>
     <button class="btn-opcao btn-cancelar-opcao" onclick="fecharModalHistoricoAcoes()">Cancelar</button>
   </div>
@@ -922,7 +925,7 @@ atualizarCampoDataManualGerador();
 
 
 </script>
-<script src="script.js?v=2006"></script>
+<script src="script.js?v=2007"></script>
 
 <!-- ================= MODAL CONFIRMAR SINCRONIZAR ================= -->
 <div class="modal-overlay hidden" id="modalConfirmarSync">
