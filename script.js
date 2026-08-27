@@ -2981,6 +2981,30 @@ function abrirAcoesHistorico(index) {
   historicoSelecionadoIndex = index;
   document.getElementById("modalHistoricoTitulo").textContent = reg.item || "Ações do registro";
   document.getElementById("btnHistoricoQR").style.display = (reg.tipo === "Entrada") ? "block" : "none";
+
+  // ===== Opções de desfazer (aparecem conforme o tipo do registro) =====
+  let btnDesfazerExclusao = document.getElementById("btnHistoricoDesfazerExclusao");
+  let btnDesfazerConsumo = document.getElementById("btnHistoricoDesfazerConsumo");
+  let btnDesfazerEntrada = document.getElementById("btnHistoricoDesfazerEntrada");
+
+  // Exclusão: registro de Exclusão, saída marcada como excluída,
+  // ou entrada com status (excluída)
+  let mostrarDesfazerExclusao = (reg.tipo === "Exclusão") || reg.excluida ||
+    (reg.tipo === "Entrada" && reg._removidaEstoque);
+
+  // Consumo: registro de Consumo, saída/bobina marcada como consumida
+  let mostrarDesfazerConsumo = !mostrarDesfazerExclusao &&
+    reg.tipo !== "Consumo parcial" &&
+    (reg.tipo === "Consumo" || reg.consumida);
+
+  // Entrada ativa: ainda não consumida nem excluída
+  let mostrarDesfazerEntrada = (reg.tipo === "Entrada") &&
+    !reg.consumida && !reg._removidaEstoque && !reg.excluida;
+
+  if (btnDesfazerExclusao) btnDesfazerExclusao.style.display = mostrarDesfazerExclusao ? "block" : "none";
+  if (btnDesfazerConsumo) btnDesfazerConsumo.style.display = mostrarDesfazerConsumo ? "block" : "none";
+  if (btnDesfazerEntrada) btnDesfazerEntrada.style.display = mostrarDesfazerEntrada ? "block" : "none";
+
   document.getElementById("modalHistoricoAcoes").classList.remove("hidden");
 }
 
@@ -3001,6 +3025,140 @@ function confirmarRemoverHistoricoSelecionado() {
   let idx = historicoSelecionadoIndex;
   fecharModalHistoricoAcoes();
   removerHistorico(idx);
+}
+
+/* ================= DESFAZER AÇÕES PELO HISTÓRICO ================= */
+
+// Localiza a entrada (bobina) referenciada por um registro de
+// Consumo/Exclusão. Se a entrada não existir mais no histórico
+// (ex.: foi removida manualmente), ela é recriada para permitir
+// restaurar a bobina ao estoque.
+function localizarEntradaReferenciada(reg) {
+  let refId = reg.refEntradaId || reg.bobinaOriginalId || null;
+  if (refId) {
+    let encontrada = historico.find(h => h && h.id === refId && h.tipo === "Entrada");
+    if (encontrada) return encontrada;
+  }
+  let nova = {
+    id: refId || crypto.randomUUID(),
+    data: reg.refEntradaData || reg.data || new Date().toLocaleString(),
+    tipo: "Entrada",
+    item: reg.item,
+    qtd: reg.qtd
+  };
+  historico.unshift(nova);
+  return nova;
+}
+
+function desfazerExclusaoDoHistorico() {
+  if (historicoSelecionadoIndex === null) return;
+  let reg = historico[historicoSelecionadoIndex];
+  fecharModalHistoricoAcoes();
+  if (!reg) return;
+
+  let entrada = (reg.tipo === "Entrada") ? reg : localizarEntradaReferenciada(reg);
+  if (!entrada) { mostrarToast("Não foi possível desfazer a exclusão", "erro"); return; }
+
+  salvarEstadoParaDesfazer();
+
+  entrada._removidaEstoque = false;
+  delete entrada.excluida;
+
+  // Devolve o peso ao estoque apenas se a bobina não estava consumida
+  if (!entrada.consumida) {
+    estoque[entrada.item] = (estoque[entrada.item] || 0) + entrada.qtd;
+    estoque[entrada.item + "_qtd"] = (estoque[entrada.item + "_qtd"] || 0) + 1;
+  }
+
+  // Remove o registro de Exclusão ligado a esta entrada
+  if (reg !== entrada) {
+    let i = historico.indexOf(reg);
+    if (i >= 0) historico.splice(i, 1);
+  } else {
+    for (let i = historico.length - 1; i >= 0; i--) {
+      if (historico[i].tipo === "Exclusão" && historico[i].refEntradaId === entrada.id) {
+        historico.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  salvarDados();
+  atualizarTudo();
+  if (navigator.vibrate) navigator.vibrate([50]);
+  mostrarToast("Exclusão desfeita");
+}
+
+function desfazerConsumoDoHistorico() {
+  if (historicoSelecionadoIndex === null) return;
+  let reg = historico[historicoSelecionadoIndex];
+  fecharModalHistoricoAcoes();
+  if (!reg) return;
+
+  let entrada = (reg.tipo === "Entrada") ? reg : localizarEntradaReferenciada(reg);
+  if (!entrada) { mostrarToast("Não foi possível desfazer o consumo", "erro"); return; }
+
+  salvarEstadoParaDesfazer();
+
+  entrada.consumida = false;
+
+  // Devolve o peso ao estoque apenas se a bobina não foi excluída
+  if (!entrada._removidaEstoque) {
+    estoque[entrada.item] = (estoque[entrada.item] || 0) + entrada.qtd;
+    estoque[entrada.item + "_qtd"] = (estoque[entrada.item + "_qtd"] || 0) + 1;
+  }
+
+  // Remove o registro de Consumo ligado a esta entrada
+  if (reg !== entrada) {
+    let i = historico.indexOf(reg);
+    if (i >= 0) historico.splice(i, 1);
+  } else {
+    for (let i = historico.length - 1; i >= 0; i--) {
+      if (historico[i].tipo === "Consumo" && historico[i].refEntradaId === entrada.id) {
+        historico.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  salvarDados();
+  atualizarTudo();
+  if (navigator.vibrate) navigator.vibrate([50]);
+  mostrarToast("Consumo desfeito");
+}
+
+function desfazerEntradaDoHistorico() {
+  if (historicoSelecionadoIndex === null) return;
+  let reg = historico[historicoSelecionadoIndex];
+  fecharModalHistoricoAcoes();
+  if (!reg || reg.tipo !== "Entrada" || reg.consumida || reg._removidaEstoque) return;
+
+  salvarEstadoParaDesfazer();
+
+  let chave = reg.item;
+  if (estoque[chave]) {
+    estoque[chave] -= reg.qtd;
+    if (estoque[chave + "_qtd"] > 0) estoque[chave + "_qtd"]--;
+    if (estoque[chave] <= 0) { delete estoque[chave]; delete estoque[chave + "_qtd"]; }
+  }
+
+  // Marca como excluída e registra a Exclusão — mesmo padrão usado
+  // em "Excluir bobina", assim dá para refazer depois se precisar
+  reg._removidaEstoque = true;
+  historico.push({
+    id: crypto.randomUUID(),
+    data: new Date().toLocaleString(),
+    tipo: "Exclusão",
+    item: chave,
+    qtd: reg.qtd,
+    refEntradaId: reg.id,
+    refEntradaData: reg.data
+  });
+
+  salvarDados();
+  atualizarTudo();
+  if (navigator.vibrate) navigator.vibrate([50]);
+  mostrarToast("Entrada desfeita");
 }
 
 function fecharModalQR() {
@@ -5503,6 +5661,9 @@ window.abrirAcoesHistorico = abrirAcoesHistorico;
 window.fecharModalHistoricoAcoes = fecharModalHistoricoAcoes;
 window.abrirQRDoHistorico = abrirQRDoHistorico;
 window.confirmarRemoverHistoricoSelecionado = confirmarRemoverHistoricoSelecionado;
+window.desfazerExclusaoDoHistorico = desfazerExclusaoDoHistorico;
+window.desfazerConsumoDoHistorico = desfazerConsumoDoHistorico;
+window.desfazerEntradaDoHistorico = desfazerEntradaDoHistorico;
 window.abrirScannerContinuo = abrirScannerContinuo;
 window.fecharScannerContinuo = fecharScannerContinuo;
 window.geradorFecharFinal = geradorFecharFinal;
