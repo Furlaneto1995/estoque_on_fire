@@ -1042,6 +1042,8 @@ body.dark-mode .gerador-card-tipo.tipo-fundo { background: #2e1065; color: #c4b5
 
 .btn-consumir-opcao { background: #f0fdf4; color: #166534; }
 
+.btn-desfazer-opcao { background: #f0fdf4; color: #166534; }
+
 .btn-excluir-opcao  { background: #fef2f2; color: #dc2626; }
 
 .btn-cancelar-opcao { background: #f1f5f9; color: #64748b; text-align: center; }
@@ -1629,6 +1631,8 @@ body.dark-mode tr.grupo-aberto .btn-expandir-detalhe {
 body.dark-mode .btn-editar-opcao   { background: #1e3a5f !important; color: #93c5fd !important; }
 
 body.dark-mode .btn-consumir-opcao { background: #1f3a2a !important; color: #86efac !important; }
+
+body.dark-mode .btn-desfazer-opcao { background: #1f3a2a !important; color: #86efac !important; }
 
 body.dark-mode .btn-excluir-opcao  { background: #3f1d1d !important; color: #fca5a5 !important; }
 
